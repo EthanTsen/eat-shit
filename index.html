@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>妮可接鼻屎遊戲</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    canvas {
+      display: block;
+      background: #222;
+    }
+    #controls {
+      position: fixed;
+      bottom: 2vh;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      z-index: 10;
+    }
+    #controls button {
+      font-size: 6vw;
+      padding: 4vw 8vw;
+      margin: 0 4vw;
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="gameCanvas"></canvas>
+<div id="controls">
+  <button id="leftBtn">← 左</button>
+  <button id="rightBtn">右 →</button>
+</div>
+
+<script>
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+
+  const playerImage1 = new Image();
+  playerImage1.src = "player.png";
+
+  const coinImage1 = new Image();
+  coinImage1.src = "coin.png";
+
+  const coinImage2 = new Image();
+  coinImage2.src = "coin-2.png";
+
+  let player = {};
+  let gold = {};
+  let score = 0;
+  let lives = 3;
+  let keys = {};
+
+  function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const w = canvas.width;
+    const h = canvas.height;
+
+    const playerWidth = w * 0.2;
+    const playerHeight = playerWidth;
+
+    player = {
+      x: w / 2 - playerWidth / 2,
+      y: h - playerHeight - h * 0.15,
+      width: playerWidth,
+      height: playerHeight,
+      speed: w * 0.02,
+      image: playerImage1
+    };
+
+    const goldSize = w * 0.12;
+    gold = {
+      x: Math.random() * (w - goldSize),
+      y: 0,
+      width: goldSize,
+      height: goldSize,
+      speed: h * 0.005,
+      image: coinImage1
+    };
+  }
+
+  function resetGold() {
+    gold.y = 0;
+    gold.x = Math.random() * (canvas.width - gold.width);
+    gold.image = Math.random() < 0.5 ? coinImage1 : coinImage2;
+  }
+
+  function update() {
+    if (keys['ArrowLeft'] && player.x > 0) player.x -= player.speed;
+    if (keys['ArrowRight'] && player.x < canvas.width - player.width) player.x += player.speed;
+
+    gold.y += gold.speed;
+
+    if (
+      gold.y + gold.height > player.y &&
+      gold.x + gold.width > player.x &&
+      gold.x < player.x + player.width
+    ) {
+      score++;
+      if (score % 5 === 0 && gold.speed < canvas.height * 0.03) {
+        gold.speed += canvas.height * 0.001;
+      }
+      resetGold();
+    }
+
+    if (gold.y > canvas.height) {
+      lives--;
+      if (lives === 0) {
+        alert("你屎了！你的分數是：" + score);
+        document.location.reload();
+      } else {
+        resetGold();
+      }
+    }
+  }
+
+  function draw() {
+    ctx.fillStyle = 'black';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    if (player.image.complete) {
+      ctx.drawImage(player.image, player.x, player.y, player.width, player.height);
+    } else {
+      ctx.fillStyle = 'cyan';
+      ctx.fillRect(player.x, player.y, player.width, player.height);
+    }
+
+    if (gold.image.complete) {
+      ctx.drawImage(gold.image, gold.x, gold.y, gold.width, gold.height);
+    } else {
+      ctx.fillStyle = 'gold';
+      ctx.fillRect(gold.x, gold.y, gold.width, gold.height);
+    }
+
+    ctx.fillStyle = 'white';
+    ctx.font = `${canvas.width * 0.05}px Arial`;
+    ctx.fillText("分數: " + score, 10, 40);
+    ctx.fillText("生命: " + lives, 10, 80);
+  }
+
+  function gameLoop() {
+    update();
+    draw();
+    requestAnimationFrame(gameLoop);
+  }
+
+  document.addEventListener('keydown', e => keys[e.key] = true);
+  document.addEventListener('keyup', e => keys[e.key] = false);
+
+  document.getElementById('leftBtn').addEventListener('touchstart', () => keys['ArrowLeft'] = true);
+  document.getElementById('leftBtn').addEventListener('touchend', () => keys['ArrowLeft'] = false);
+  document.getElementById('rightBtn').addEventListener('touchstart', () => keys['ArrowRight'] = true);
+  document.getElementById('rightBtn').addEventListener('touchend', () => keys['ArrowRight'] = false);
+
+  window.onload = () => {
+    resizeCanvas();
+    gameLoop();
+  };
+
+  window.addEventListener('resize', () => {
+    resizeCanvas();
+  });
+</script>
+</body>
+</html>
