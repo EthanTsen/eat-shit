@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>妮可接鼻屎遊戲</title>
+  <style>
+    canvas { background: #222; display: block; margin: 0 auto; }
+  </style>
+</head>
+<body>
+<canvas id="gameCanvas" width="400" height="600"></canvas>
+<div style="text-align:center; margin-top: 10px;">
+    <button id="leftBtn" style="font-size:24px; padding:10px;">← 左</button>
+    <button id="rightBtn" style="font-size:24px; padding:10px;">右 →</button>
+  </div>
+  
+<script>
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+  
+  const playerImage1 = new Image();
+  playerImage1.src = "player.png"; // 玩家
+
+  const coinImage1 = new Image();
+coinImage1.src = "coin.png"; // 普通金幣
+
+const coinImage2 = new Image();
+coinImage2.src = "coin-2.png"; // 特殊金幣
+
+  // 玩家平台
+  const player = {
+  x: 50,
+  y: 350,
+  width: 150,
+  height: 150,
+  speed: 5,
+  image: playerImage1  // 預設使用圖片1
+};
+
+
+  // 金塊
+  let gold = {
+  x: Math.random() * 350,
+  y: 0,
+  width: 60,
+  height: 60,
+  speed: 3,
+  image: coinImage1  // 預設使用圖片1
+};
+
+
+  let score = 0;
+  let lives = 3;
+  let keys = {};
+
+  document.addEventListener('keydown', e => keys[e.key] = true);
+  document.addEventListener('keyup', e => keys[e.key] = false);
+
+  function update() {
+    // 控制左右移動
+    if (keys['ArrowLeft'] && player.x > 0) player.x -= player.speed;
+    if (keys['ArrowRight'] && player.x < canvas.width - player.width) player.x += player.speed;
+
+    // 金塊掉落
+    gold.y += gold.speed;
+
+    // 接到金塊
+    if (
+      gold.y + gold.height > player.y &&
+      gold.x + gold.width > player.x &&
+      gold.x < player.x + player.width
+    ) {
+      score++;
+      // 每 5 分加快速度（最高 10）
+      if (score % 5 === 0 && gold.speed < 10) {
+        gold.speed += 1;
+      }
+      resetGold();
+    }
+
+    // 沒接到金塊
+    if (gold.y > canvas.height) {
+      lives--;
+      if (lives === 0) {
+        alert("你屎了！你的分數是：" + score);
+        document.location.reload();
+      } else {
+        resetGold();
+      }
+    }
+  }
+
+  function resetGold() {
+  gold.y = 0;
+  gold.x = Math.random() * (canvas.width - gold.width);
+  
+  // 50% 機率選擇 coin1 或 coin2
+  gold.image = Math.random() < 0.5 ? coinImage1 : coinImage2;
+}
+
+
+function draw() {
+  // 畫白色背景
+  ctx.fillStyle = 'black';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // 畫玩家
+  if (player.image.complete) {
+    ctx.drawImage(player.image, player.x, player.y, player.width, player.height);
+  } else {
+    ctx.fillStyle = 'cyan';
+    ctx.fillRect(player.x, player.y, player.width, player.height);
+  }
+
+  // 畫金塊（已隨機決定 gold.image）
+  if (gold.image.complete) {
+    ctx.drawImage(gold.image, gold.x, gold.y, gold.width, gold.height);
+  } else {
+    ctx.fillStyle = 'gold';
+    ctx.fillRect(gold.x, gold.y, gold.width, gold.height);
+  }
+
+  // 畫分數與生命
+  ctx.fillStyle = 'white';  // 白色字
+ 
+  ctx.font = '20px Arial';
+  ctx.fillText("分數: " + score, 10, 30);
+  ctx.fillText("生命: " + lives, 10, 60);
+}
+
+  function gameLoop() {
+    update();
+    draw();
+    requestAnimationFrame(gameLoop);
+  }
+  canvas.width = window.innerWidth;//手機尺寸
+  canvas.height = window.innerHeight;//手機尺寸
+  
+  gameLoop();
+  // 手機按鈕控制
+document.getElementById('leftBtn').addEventListener('touchstart', () => keys['ArrowLeft'] = true);
+document.getElementById('leftBtn').addEventListener('touchend', () => keys['ArrowLeft'] = false);
+
+document.getElementById('rightBtn').addEventListener('touchstart', () => keys['ArrowRight'] = true);
+document.getElementById('rightBtn').addEventListener('touchend', () => keys['ArrowRight'] = false);
+
+</script>
+</body>
+</html>
